@@ -1,119 +1,114 @@
 package hk.ust.cse.fchenaa.elastic.search.client;
 
-/*
- * for api 2.3.2
- */
+import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
+
+import io.searchbox.client.JestClient;
+import io.searchbox.client.JestClientFactory;
+import io.searchbox.client.JestResult;
+import io.searchbox.client.config.HttpClientConfig;
+import io.searchbox.core.Bulk;
+import io.searchbox.core.BulkResult;
+import io.searchbox.core.Delete;
+import io.searchbox.core.DocumentResult;
+import io.searchbox.core.Get;
+import io.searchbox.core.Index;
+import io.searchbox.core.Search;
+import io.searchbox.core.SearchResult;
+import io.searchbox.indices.CreateIndex;
+
+
 public class ElasticsearchManager {
 
-	public void index() {
+	private static JestClient client; //since this is a singleton, I'm going to just initialise it once.
 
-	}
-
-	public void get() {
-
-	}
-
-	public void delete() {
-
-	}
-
-	public void update() {
-
-	}
-
-	public void search() {
-
-	}
-
-	/*
-	public static Map<String, Object> putJsonDocument(String title, String content, Date postDate, 
-			String[] tags, String author){
-
-		Map<String, Object> jsonDocument = new HashMap<String, Object>();
-
-		jsonDocument.put("title", title);
-		jsonDocument.put("content", content);
-		jsonDocument.put("postDate", postDate);
-		jsonDocument.put("tags", tags);
-		jsonDocument.put("author", author);
-
-		return jsonDocument;
-	}	
-
-	public static void getDocument(Client client, String index, String type, String id){
-
-		GetResponse getResponse = client.prepareGet(index, type, id)
-				.execute()
-				.actionGet();
-		Map<String, Object> source = getResponse.getSource();
-
-		System.out.println("------------------------------");
-		System.out.println("Index: " + getResponse.getIndex());
-		System.out.println("Type: " + getResponse.getType());
-		System.out.println("Id: " + getResponse.getId());
-		System.out.println("Version: " + getResponse.getVersion());
-		System.out.println(source);
-		System.out.println("------------------------------");
-
-	}
-
-	public static void updateDocument(Client client, String index, String type, 
-			String id, String field, String newValue){
-
-		Map<String, Object> updateObject = new HashMap<String, Object>();
-		updateObject.put(field, newValue);
-
-		client.prepareUpdate(index, type, id)
-		.setScript("ctx._source." + field + "=" + field)
-		.setScriptParams(updateObject).execute().actionGet();
-	}
-
-	public static void updateDocument(Client client, String index, String type,
-			String id, String field, String[] newValue){
-
-		String tags = "";
-		for(String tag :newValue)
-			tags += tag + ", ";
-
-		tags = tags.substring(0, tags.length() - 2);
-
-		Map<String, Object> updateObject = new HashMap<String, Object>();
-		updateObject.put(field, tags);
-
-		client.prepareUpdate(index, type, id)
-		.setScript("ctx._source." + field + "+=" + field)
-		.setScriptParams(updateObject).execute().actionGet();
-	}
-
-	public static void searchDocument(Client client, String index, String type,
-			String field, String value){
-
-		SearchResponse response = client.prepareSearch(index)
-				.setTypes(type)
-				.setSearchType(SearchType.QUERY_AND_FETCH)
-				.setQuery(fieldQuery(field, value))
-				.setFrom(0).setSize(60).setExplain(true)
-				.execute()
-				.actionGet();
-
-		SearchHit[] results = response.getHits().getHits();
-
-		System.out.println("Current results: " + results.length);
-		for (SearchHit hit : results) {
-			System.out.println("------------------------------");
-			Map<String,Object> result = hit.getSource();   
-			System.out.println(result);
+	static {
+		if(client == null) {
+			JestClientFactory factory = new JestClientFactory();
+			factory.setHttpClientConfig(new HttpClientConfig
+					.Builder("http://localhost:9200")
+					.multiThreaded(true)
+					.build());
+			client = factory.getObject();
 		}
 	}
 
-	public static void deleteDocument(Client client, String index, String type, String id){
+	public boolean index() throws IOException {
+		client.execute(new CreateIndex.Builder("articles").build());
 
-		DeleteResponse response = client.prepareDelete(index, type, id).execute().actionGet();
-		System.out.println("Information on the deleted document:");
-		System.out.println("Index: " + response.getIndex());
-		System.out.println("Type: " + response.getType());
-		System.out.println("Id: " + response.getId());
-		System.out.println("Version: " + response.getVersion());
-	}   
-	*/
+		Map<String, String> source = new LinkedHashMap<String,String>();
+		source.put("user", "Fuxiang Chen");
+		source.put("tel", "999");
+		source.put("email", "cfuxiang@gmail.com");
+
+		Index index = new Index.Builder(source).index("articles").type("testing").build();
+		DocumentResult docResult = client.execute(index);
+		return docResult.getResponseCode() == 200;
+	}
+
+	public String get() throws IOException {
+		Get get = new Get.Builder("twitter", "1").type("tweet").build();
+		JestResult result = client.execute(get);
+		//for now just return the json string
+		//later on will use gson - java bean
+		return result.getJsonString();
+	}
+
+	public boolean update() throws IOException {
+		String script = "{ \"user\" : \"New User\", " +
+				"  \"tel\" : \"999\", " +
+				"  \"new field\" : \"test\"" +
+				"}";
+
+		//careful - if none of the index, type & id exist, it will create a new record
+		//safer to do a search then update! 
+		DocumentResult docResult = client.execute(new Index.Builder(script)
+									.index("articles11")
+									.type("testing22")
+									.id("AVSoCLq_zHpvC9RUdv1A")
+									.build());
+		return docResult.getResponseCode() == 200;
+	}	
+
+	public boolean delete() throws IOException {
+		DocumentResult docResult = client.execute(new Delete.Builder("AVSoB6pzzHpvC9RUdv0_")
+									.index("articles")
+									.type("tweet")
+									.build());
+		return docResult.getResponseCode() == 200;
+	}
+
+	public String search() throws IOException {	
+		SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+		searchSourceBuilder.query(QueryBuilders.matchQuery("user", "Fuxiang"));
+
+		Search search = new Search.Builder(searchSourceBuilder.toString())
+				// multiple index or types can be added.
+				.addIndex("tweeter")
+				.addIndex("articles")
+				.build();
+
+		SearchResult result = client.execute(search);
+		//for now just return the json string
+		//later on will use gson - java bean
+		return result.getJsonString();
+	}
+
+	public boolean batchOp() throws IOException {
+		Bulk bulk = new Bulk.Builder()
+				.defaultIndex("twitter")
+				.defaultType("tweet")
+				//can use java beans!
+				//.addAction(new Index.Builder(article1).build())
+				//.addAction(new Index.Builder(article2).build())
+				.addAction(new Delete.Builder("1").index("twitter").type("tweet").build())
+				.build();
+
+		BulkResult bulkResult = client.execute(bulk);	
+		return bulkResult.getResponseCode() == 200;
+	}
 }
