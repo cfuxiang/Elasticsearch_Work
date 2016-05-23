@@ -148,6 +148,63 @@ public class ElasticsearchManager {
 		new InputStreamReader(myURLConnection.getInputStream()); 		
 	}		
 	
+	public void disabledSharedAllocation() throws IOException {
+		URL myURL = new URL("http://localhost:9200/_cluster/settings");
+		HttpURLConnection myURLConnection = (HttpURLConnection)myURL.openConnection();
+		myURLConnection.setRequestMethod("PUT");
+		myURLConnection.setRequestProperty("Content-Type", "application/json");
+		myURLConnection.setDoOutput(true);
+
+		String data = ""
+				//+ "{\"my_backup\": "
+				+ "			{ 	"
+				//+ "				\"type\" 	: \"fs\", "
+				+ "				\"persistent\": {"
+				//+ "					\"location\": \"D://1.7backups\", "
+				+ " 				\"cluster.routing.allocation.enable\": \"none\""
+				+ "				} "
+				+ "			}"
+				//+ "		}"
+				+ "";
+		OutputStreamWriter os = new OutputStreamWriter(myURLConnection.getOutputStream());
+		os.write(data);
+		os.close();
+		
+		new InputStreamReader(myURLConnection.getInputStream()); 			
+	}
+	
+	public void reenabledAllocation() throws IOException {
+		URL myURL = new URL("http://localhost:9200/_cluster/settings");
+		HttpURLConnection myURLConnection = (HttpURLConnection)myURL.openConnection();
+		myURLConnection.setRequestMethod("PUT");
+		myURLConnection.setRequestProperty("Content-Type", "application/json");
+		myURLConnection.setDoOutput(true);
+
+		String data = ""
+				//+ "{\"my_backup\": "
+				+ "			{ 	"
+				//+ "				\"type\" 	: \"fs\", "
+				+ "				\"persistent\": {"
+				//+ "					\"location\": \"D://1.7backups\", "
+				+ " 				\"cluster.routing.allocation.enable\": \"all\""
+				+ "				} "
+				+ "			}"
+				//+ "		}"
+				+ "";
+		OutputStreamWriter os = new OutputStreamWriter(myURLConnection.getOutputStream());
+		os.write(data);
+		os.close();
+		
+		new InputStreamReader(myURLConnection.getInputStream()); 			
+	}	
+	
+	public void synchedFlush() throws IOException {
+		URL myURL = new URL("http://localhost:9200/_flush/synced");
+		HttpURLConnection myURLConnection = (HttpURLConnection)myURL.openConnection();
+		myURLConnection.setRequestMethod("POST");
+		
+		new InputStreamReader(myURLConnection.getInputStream()); 		
+	}		
 	
 	public boolean index() throws IOException {
 		client.execute(new CreateIndex.Builder("articles").build());

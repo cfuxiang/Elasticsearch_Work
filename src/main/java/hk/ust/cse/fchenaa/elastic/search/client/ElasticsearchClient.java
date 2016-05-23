@@ -64,6 +64,33 @@ public class ElasticsearchClient {
 		}
 	}
 	
+	public void disabledSharedAllocation() {
+		try {
+			manager.disabledSharedAllocation();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public void reenabledAllocation() {
+		try {
+			manager.reenabledAllocation();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public void synchedFlush() {
+		try {
+			manager.synchedFlush();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
 	public void get() {
 		try {
 			manager.get();
@@ -106,7 +133,10 @@ public class ElasticsearchClient {
 		//client.curlIndex();
 		//client.registerRepository();
 		//client.createSnapshot();
-		client.restoreSnapshot();
+		//client.restoreSnapshot();
+		//client.disabledSharedAllocation();
+		//client.synchedFlush();
+		client.reenabledAllocation();
 	}
 	
 }
