@@ -1,11 +1,20 @@
 package hk.ust.cse.fchenaa.elastic.search.client;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.json.JSONObject;
 
 import io.searchbox.client.JestClient;
 import io.searchbox.client.JestClientFactory;
@@ -37,6 +46,109 @@ public class ElasticsearchManager {
 		}
 	}
 
+	/*
+	 * create the setup data for the backing/snapshot
+	 * 3 dummy data created
+	 */
+	public boolean setup() throws IOException {
+		client.execute(new CreateIndex.Builder("articles").build());
+		Map<String, String> source = null;
+		Index index = null;
+		DocumentResult docResult = null;
+		
+		//data #1
+		source = new LinkedHashMap<String,String>();
+		source.put("user", "Fuxiang Chen #1");
+		source.put("tel", "999");
+		source.put("email", "cfuxiang@gmail.com");
+
+		index = new Index.Builder(source).index("articles").type("testing type").build();
+		docResult = client.execute(index);
+		
+		boolean data1Result = docResult.getResponseCode() == 200;
+
+		//data #2
+		source = new LinkedHashMap<String,String>();
+		source.put("user", "Fuxiang Chen #2");
+		source.put("tel", "9999");
+		source.put("email", "fchenaa@cse.ust.hk");
+
+		index = new Index.Builder(source).index("articles").type("testing type").build();
+		docResult = client.execute(index);
+		
+		boolean data2Result = docResult.getResponseCode() == 200;
+		
+		//data #3
+		source = new LinkedHashMap<String,String>();
+		source.put("user", "Fuxiang Chen #3");
+		source.put("tel", "99999");
+		source.put("email", "fxchen@smu.edu.sg");
+
+		index = new Index.Builder(source).index("articles").type("testing type").build();
+		docResult = client.execute(index);
+		
+		boolean data3Result = docResult.getResponseCode() == 200;		
+		
+		return data1Result && data2Result && data3Result;		
+	}
+	
+	
+	public void curlIndex() throws IOException {
+		URL myURL = new URL("http://localhost:9200/blog/user/dilbert");
+		HttpURLConnection myURLConnection = (HttpURLConnection)myURL.openConnection();
+		myURLConnection.setRequestMethod("PUT");
+		myURLConnection.setRequestProperty("Content-Type", "application/json");
+		myURLConnection.setDoOutput(true);
+
+		String data = "{ \"name\" : \"Dilbert Brown\" }";
+		OutputStreamWriter os = new OutputStreamWriter(myURLConnection.getOutputStream());
+		os.write(data);
+		os.close();
+		
+		new InputStreamReader(myURLConnection.getInputStream());  
+	}
+	
+	public void registerRepository() throws IOException {
+		URL myURL = new URL("http://localhost:9200/_snapshot/my_backup");
+		HttpURLConnection myURLConnection = (HttpURLConnection)myURL.openConnection();
+		myURLConnection.setRequestMethod("PUT");
+		myURLConnection.setRequestProperty("Content-Type", "application/json");
+		myURLConnection.setDoOutput(true);
+
+		String data = ""
+				//+ "{\"my_backup\": "
+				+ "			{ 	\"type\" 	: \"fs\", "
+				+ "				\"settings\": {"
+				+ "					\"location\": \"D://1.7backups\", "
+				+ " 				\"compress\": \"true\""
+				+ "				} "
+				+ "			}"
+				//+ "		}"
+				+ "";
+		OutputStreamWriter os = new OutputStreamWriter(myURLConnection.getOutputStream());
+		os.write(data);
+		os.close();
+		
+		new InputStreamReader(myURLConnection.getInputStream()); 		
+	}
+	
+	public void createSnapshot() throws IOException {
+		URL myURL = new URL("http://localhost:9200/_snapshot/my_backup/snapshot_1?wait_for_completion=true");
+		HttpURLConnection myURLConnection = (HttpURLConnection)myURL.openConnection();
+		myURLConnection.setRequestMethod("PUT");
+		
+		new InputStreamReader(myURLConnection.getInputStream()); 		
+	}	
+	
+	public void restoreSnapshot() throws IOException {
+		URL myURL = new URL("http://localhost:9200/_snapshot/my_backup/snapshot_1/_restore");
+		HttpURLConnection myURLConnection = (HttpURLConnection)myURL.openConnection();
+		myURLConnection.setRequestMethod("POST");
+		
+		new InputStreamReader(myURLConnection.getInputStream()); 		
+	}		
+	
+	
 	public boolean index() throws IOException {
 		client.execute(new CreateIndex.Builder("articles").build());
 

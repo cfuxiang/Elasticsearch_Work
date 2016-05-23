@@ -10,9 +10,54 @@ public class ElasticsearchClient {
 		manager = new ElasticsearchManager();
 	}
 	
+	public void setup() {
+		try {
+			manager.setup();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
 	public void index() {
 		try {
 			manager.index();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public void curlIndex() {
+		try {
+			manager.curlIndex();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public void registerRepository() {
+		try {
+			manager.registerRepository();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public void createSnapshot() {
+		try {
+			manager.createSnapshot();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public void restoreSnapshot() {
+		try {
+			manager.restoreSnapshot();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -53,6 +98,15 @@ public class ElasticsearchClient {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	
+	public static void main(String[] args) {
+		ElasticsearchClient client = new ElasticsearchClient();
+		//client.setup();
+		//client.curlIndex();
+		//client.registerRepository();
+		//client.createSnapshot();
+		client.restoreSnapshot();
 	}
 	
 }
