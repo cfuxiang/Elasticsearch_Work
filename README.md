@@ -9,3 +9,4 @@ Several benefits rather than using the native elasticsearch api
 - it has some nice features e.g. java beans!
 - I was about to create a similar work but since it has been done, I do not want to reinvent the wheel
 
+For some of the methods such as creating and restoring snapshots, I have used the native APIs instead. Apparantly, there's no such features in jest.
